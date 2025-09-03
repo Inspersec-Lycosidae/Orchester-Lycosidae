@@ -1,0 +1,9 @@
+uvicorn[standard]
+fastapi
+sqlalchemy
+pymysql
+pydantic
+pydantic[email]
+passlib
+requests
+PyJWT
