@@ -1,7 +1,6 @@
 # routers.py
 from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
 from schemas import *
 from typing import Optional
 
