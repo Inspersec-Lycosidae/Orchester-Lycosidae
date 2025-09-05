@@ -3,11 +3,15 @@ from fastapi import APIRouter, HTTPException
 from utils import *
 from schemas import *
 import subprocess
+import os
+import socket
 
 router = APIRouter(
     prefix="/orchester",
     tags=["orchester"]
 )
+
+PUBLIC_IP = os.getenv("PUBLIC_IP")
 
 
 ###################################
@@ -73,7 +77,7 @@ async def start_docker(request: StartDockerRequest):
             "container_id": container_id,
             "time_alive": time_alive,
             "host_port": host_port,
-            "service_url": f"http://0.0.0.0:{host_port}"  # exposed externally
+            "service_url": f"http://{PUBLIC_IP}:{host_port}"  # exposed externally
         }
 
     except Exception as e:
