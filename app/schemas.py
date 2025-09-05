@@ -1,29 +1,24 @@
 # schemas.py
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 #########################################################################
 ##### Uses pydantic for cache/dynamic objects; not referenced in DB #####
 #########################################################################
 
-#Base JWT AuthToken model
-class AuthToken(BaseModel):
-    id : int
-    username : str
-    email : str
-    role : Optional[str] = None
-    exp : Optional[int] = None  # Optional expiry (timestamp) for the JWT
+#Docker request schema
+class StartDockerRequest(BaseModel):
+    image_link: str #dockerhub url
+    time_alive: int #seconds
+    exercise_name: str #name of the exercise
+    competition_name: str #name of the competition
+    competition_uuid: str #uuid of the competition
+    port: int #port where the container is interacting
 
-    # Allow any additional fields
-    class Config:
-        extra = "allow"
+#Docker shutdown schema
+class ShutdownDockerRequest(BaseModel):
+    container_id: str #container ID
 
-class UserCreateDTO(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
-
-class UserReadDTO(BaseModel):
-    id: int
-    username: str
-    email: EmailStr
+#Docker deletion schema
+class DeleteDockerRequest(BaseModel):
+    container_id: str #container ID
