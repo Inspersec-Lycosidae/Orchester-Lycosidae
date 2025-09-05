@@ -21,11 +21,55 @@ PUBLIC_IP = os.getenv("PUBLIC_IP")
 #Default function, change as needed
 @router.get("")
 async def root_func():
+    """
+    Root endpoint for testing or default access.
+
+    Returns:
+        dict: A simple message confirming the route works.
+    """
     return {"message": "Root function ran!"}
+
 
 #Starts a docker image of a given exercise
 @router.post("/start")
 async def start_docker(request: StartDockerRequest):
+    """
+    Start a Docker container for a specific exercise.
+
+    Steps:
+        1. Sanitize the container name.
+        2. Validate the requested time_alive value.
+        3. Pull the Docker image from the registry.
+        4. Find a free host port (50000–60000).
+        5. Run the container with port mapping.
+        6. Schedule container stop as a failsafe.
+
+    Args:
+        request (StartDockerRequest): Contains competition_name, exercise_name, competition_uuid,
+                                     image_link, port, and time_alive.
+    {
+        "image_link": "inspersec/basic-ctf:latest",
+        "time_alive": 50,
+        "exercise_name": "reverse_shell",
+        "competition_name": "cyber_challenge",
+        "competition_uuid": "123e4567-e89b-12d3-a456-426614174002",
+        "port": 5000
+    }
+    
+
+    Returns:
+        dict: Status, container_id, allocated host_port, time_alive, and service_url.
+    {
+        "status": "success",
+        "container_id": "a02d2e43351dad6e3b929bf1d35d7cfa4cb23e5768e593f046d477fcd641cf41",
+        "time_alive": 50,
+        "host_port": 50000,
+        "service_url": "http://84.247.185.240:50000"
+    }
+
+    Raises:
+        HTTPException: If any Docker operation fails or input is invalid.
+    """
     try:
         # Sanitize container name components
         container_name = sanitize_container_name(
@@ -83,9 +127,29 @@ async def start_docker(request: StartDockerRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
+
 #Shutdowns the docker image of a given exercise
 @router.post("/shutdown")
 async def shutdown_docker(request: ShutdownDockerRequest):
+    """
+    Stop and remove a running Docker container by container ID.
+
+    Args:
+        request (ShutdownDockerRequest): Contains container_id to shutdown.
+    {
+        "container_id": "018cc167cf2f9eb5320d28060b6d6855ad1bcbbe67cdb931f7fcc76ffde310b8"
+    }
+
+    Returns:
+        dict: Status and container_id that was shut down.
+    {
+        "status": "success",
+        "container_id": "018cc167cf2f9eb5320d28060b6d6855ad1bcbbe67cdb931f7fcc76ffde310b8",
+    }
+
+    Raises:
+        HTTPException: If stopping or removing the container fails.
+    """
     try:
         # Stop the container
         stop_cmd = ["docker", 
@@ -108,9 +172,36 @@ async def shutdown_docker(request: ShutdownDockerRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
+
 #Delete a exercise docker
 @router.post("/delete")
 async def delete_docker(request: DeleteDockerRequest):
+    """
+    Delete a Docker container and its image for a given exercise.
+
+    Steps:
+        1. Stop the container if it is running.
+        2. Remove the container.
+        3. Inspect the container to find the image ID.
+        4. Remove the image forcibly.
+
+    Args:
+        request (DeleteDockerRequest): Contains container_id of the container to delete.
+    {
+    "container_id": "018cc167cf2f9eb5320d28060b6d6855ad1bcbbe67cdb931f7fcc76ffde310b8"
+    }
+
+    Returns:
+        dict: Status, container_id, and removed image_id.
+    {
+        "status": "success",
+        "container_id": "018cc167cf2f9eb5320d28060b6d6855ad1bcbbe67cdb931f7fcc76ffde310b8",
+        "image_id": ""
+    }
+
+    Raises:
+        HTTPException: If stopping/removing the container or removing the image fails.
+    """
     try:
         cid = request.container_id
 
@@ -145,7 +236,7 @@ async def delete_docker(request: DeleteDockerRequest):
         if result.returncode != 0:
             raise HTTPException(status_code=500, detail=f"Failed to remove image: {result.stderr.strip()}")
 
-        return {"status": "success", "container_id_or_name": cid, "image_id": image_id}
+        return {"status": "success", "container_id": cid, "image_id": image_id}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
